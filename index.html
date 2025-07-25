@@ -49,10 +49,12 @@
 
             const element = document.querySelector('input');
             element.addEventListener('focus', () => {
-                document.body.style = `height: ${window.visualViewport?.height}px`;
+                const element = document.querySelector('body');
+                element.style = `height: ${window.visualViewport?.height}px`;
             });
             element.addEventListener('blur', () => {
-                document.body.style = ``;
+                const element = document.querySelector('body');
+                element.style = ``;
             });
         });
         visualViewport.addEventListener("resize", function() {
