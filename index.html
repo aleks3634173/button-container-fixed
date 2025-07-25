@@ -43,19 +43,18 @@
         }
     </style>
     <script>
+        const old = window.visualViewport?.height;
         document.addEventListener("DOMContentLoaded", function() {
             const element = document.querySelector('.info');
             element.innerHTML = `visualViewport: ${visualViewport.height}\nscreen: ${screen.height}\nVisualViewport.offsetTop: ${visualViewport.offsetTop}\nVisualViewport.pageTop: ${visualViewport.pageTop}\n`
 
             const input = document.querySelector('input');
             input.addEventListener('focus', () => {
-                console.log('11')
-                const element = document.querySelector('body');
-                console.log(element)
-                element.style = `height: ${window.visualViewport?.height}px`;
+                const element = document.querySelector('.container');
+                element.style = `bottom: ${old - window.visualViewport?.height}px`;
             });
             input.addEventListener('blur', () => {
-                const element = document.querySelector('body');
+                const element = document.querySelector('.container');
                 element.style = ``;
             });
         });
