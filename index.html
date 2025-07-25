@@ -47,12 +47,14 @@
             const element = document.querySelector('.info');
             element.innerHTML = `visualViewport: ${visualViewport.height}\nscreen: ${screen.height}\nVisualViewport.offsetTop: ${visualViewport.offsetTop}\nVisualViewport.pageTop: ${visualViewport.pageTop}\n`
 
-            const element = document.querySelector('input');
-            element.addEventListener('focus', () => {
+            const input = document.querySelector('input');
+            input.addEventListener('focus', () => {
+                console.log('11')
                 const element = document.querySelector('body');
+                console.log(element)
                 element.style = `height: ${window.visualViewport?.height}px`;
             });
-            element.addEventListener('blur', () => {
+            input.addEventListener('blur', () => {
                 const element = document.querySelector('body');
                 element.style = ``;
             });
