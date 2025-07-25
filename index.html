@@ -46,6 +46,14 @@
         document.addEventListener("DOMContentLoaded", function() {
             const element = document.querySelector('.info');
             element.innerHTML = `visualViewport: ${visualViewport.height}\nscreen: ${screen.height}\nVisualViewport.offsetTop: ${visualViewport.offsetTop}\nVisualViewport.pageTop: ${visualViewport.pageTop}\n`
+
+            const element = document.querySelector('input');
+            element.addEventListener('focus', () => {
+                window.body.style = `height: ${window.visualViewport?.height}`;
+            });
+            element.addEventListener('blur', () => {
+                window.body.style = ``;
+            });
         });
         visualViewport.addEventListener("resize", function() {
             const element = document.querySelector('.info');
