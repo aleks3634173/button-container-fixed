@@ -1,159 +1,379 @@
-<html>
+<!DOCTYPE html>
+<html lang="ru">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Умная прокрутка при клавиатуре</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: green;
-            position: relative;
-            height: 100vh;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f2f2f7;
         }
-        .container {
-            height: 56px;
-            bottom: 32px;
-            left: 20px;
-            right: 20px;
-            position: fixed;
-            display: flex;
-            flex-direction: column;
+
+        .content {
+            padding: 20px;
+            padding-bottom: 120px;
         }
-        .background {
-            position: absolute;
-            top: -16px;
-            bottom: -32px;
-            left: -20px;
-            right: -20px;
-            background-color: white;
-            border-top: 1px solid transparent;
-            z-index: -1;
+
+        .form-group {
+            margin-bottom: 20px;
         }
-        .button {
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #000;
+        }
+
+        .input-field {
             width: 100%;
-            height: 56px;
-            background-color: blue;
+            padding: 16px;
+            border: 1px solid #c6c6c8;
+            border-radius: 10px;
+            font-size: 16px;
+            background: white;
+            transition: border-color 0.2s ease;
         }
-        .info {
+
+        .input-field:focus {
+            border-color: #007AFF;
+            outline: none;
+        }
+
+        .keyboard-buttons {
             position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: white;
-            height: 250px;
-            width: 250px;
-            white-space: pre-wrap;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 16px 20px calc(16px + env(safe-area-inset-bottom, 0px));
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .keyboard-buttons.keyboard-visible {
+            position: fixed;
+            bottom: var(--keyboard-height, 0px);
+        }
+
+        .buttons-row {
+            display: flex;
+            gap: 12px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .ios-btn {
+            flex: 1;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            min-height: 52px;
+            transition: all 0.2s ease;
+        }
+
+        .ios-btn-primary {
+            background: #007AFF;
+            color: white;
+        }
+
+        .ios-btn-secondary {
+            background: rgba(120, 120, 128, 0.12);
+            color: #007AFF;
+        }
+
+        .ios-btn:active {
+            transform: scale(0.98);
+        }
+
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            z-index: 1001;
+            max-width: 200px;
+        }
+
+        /* Подсветка активного поля */
+        .input-field.active {
+            border-color: #007AFF;
+            box-shadow: 0 0 0 2px rgba(0, 122, 255, 0.2);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body {
+                background: #000;
+                color: white;
+            }
+            
+            .keyboard-buttons {
+                background: #1c1c1e;
+            }
+            
+            .input-field {
+                background: #2c2c2e;
+                border-color: #38383a;
+                color: white;
+            }
+            
+            .form-label {
+                color: white;
+            }
+            
+            .ios-btn-secondary {
+                background: rgba(120, 120, 128, 0.24);
+            }
         }
     </style>
-    <script>
-        const old = window.visualViewport?.height;
-        document.addEventListener("DOMContentLoaded", function() {
-            const element = document.querySelector('.info');
-            element.innerHTML = `visualViewport: ${visualViewport.height}\nscreen: ${screen.height}\nVisualViewport.offsetTop: ${visualViewport.offsetTop}\nVisualViewport.pageTop: ${visualViewport.pageTop}\n`
-
-            const input = document.querySelector('input');
-            input.addEventListener('focus', () => {
-                const element = document.querySelector('.container');
-                element.style = `bottom: ${old - window.visualViewport?.height}px`;
-            });
-            input.addEventListener('blur', () => {
-                const element = document.querySelector('.container');
-                element.style = ``;
-            });
-        });
-        visualViewport.addEventListener("resize", function() {
-            const element = document.querySelector('.info');
-            element.innerHTML = `visualViewport: ${visualViewport.height}\nscreen: ${screen.height}\nVisualViewport.offsetTop: ${visualViewport.offsetTop}\nVisualViewport.pageTop: ${visualViewport.pageTop}\n`
-        });
-    </script>
 </head>
 <body>
-    <input type="text" />
-    <br/>
-    <div class="info">
-
+    <div class="debug-info" id="debugInfo">
+        Клавиатура: скрыта
     </div>
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
 
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
+    <div class="content">
+        <h2>Форма с множеством полей</h2>
+        
+        <div class="form-group">
+            <label class="form-label">Имя</label>
+            <input type="text" class="input-field" placeholder="Введите имя">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Фамилия</label>
+            <input type="text" class="input-field" placeholder="Введите фамилию">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" class="input-field" placeholder="Введите email">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Телефон</label>
+            <input type="tel" class="input-field" placeholder="Введите телефон">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Адрес</label>
+            <input type="text" class="input-field" placeholder="Введите адрес">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Город</label>
+            <input type="text" class="input-field" placeholder="Введите город">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Индекс</label>
+            <input type="text" class="input-field" placeholder="Введите почтовый индекс">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Страна</label>
+            <input type="text" class="input-field" placeholder="Введите страну">
+        </div>
+        
+        <div class="form-group">
+            <label class="form-label">Комментарий</label>
+            <textarea class="input-field" placeholder="Дополнительная информация" rows="3"></textarea>
+        </div>
 
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin finibus egestas consectetur. Mauris venenatis rutrum risus, eget bibendum sem tincidunt et. Duis vehicula, justo nec auctor dictum, mi lacus ullamcorper orci, eu fermentum augue lorem et felis. Praesent nec lectus orci. Suspendisse semper est vel euismod ultrices. Aliquam volutpat et quam et iaculis. Pellentesque suscipit arcu nibh, vel lobortis magna vulputate non. Phasellus semper quis turpis eget malesuada. Phasellus ac eros purus. Integer maximus erat at ligula egestas, sed faucibus arcu pulvinar. Nam vel ullamcorper eros. Praesent consectetur, risus a vehicula scelerisque, nunc eros maximus lacus, vel facilisis nisl lorem in orci. Nam ipsum dolor, rhoncus sollicitudin neque in, rhoncus accumsan diam. In volutpat arcu a ex tristique, non aliquam neque scelerisque. Vestibulum cursus nisl sed mauris iaculis, non condimentum mi euismod. Quisque et ligula velit.
-
-    Pellentesque nibh metus, egestas eget consectetur sed, viverra sed mauris. Fusce ut libero eleifend urna euismod placerat. Phasellus vel lacinia nisl. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas. Sed sed nibh nibh. Suspendisse efficitur ultrices risus a rutrum. Nulla eget feugiat velit.
-
-    Pellentesque vulputate consequat mauris sed facilisis. Praesent rutrum justo mattis, vestibulum purus id, lacinia enim. Aenean vel felis fringilla odio fermentum euismod. Proin dapibus tellus ac nisl efficitur maximus ornare ut sem. Morbi euismod nibh velit, ut iaculis lectus porta nec. Etiam euismod facilisis tristique. Vestibulum ac ex ac ligula condimentum dapibus et eget felis. Praesent gravida sit amet elit et ultrices. Fusce tempus ante at convallis dictum. Aliquam nulla mauris, vehicula in aliquet in, molestie a felis. Nam ornare felis a lacinia efficitur. Sed cursus est in sagittis tincidunt. Nullam ornare volutpat auctor. Morbi placerat non augue ut vulputate. Nullam est orci, ultricies ut augue nec, bibendum lobortis neque. Quisque vitae eros quis arcu pellentesque pharetra in nec dui.
-
-    Curabitur eros est, ullamcorper vitae leo in, bibendum tempor magna. Proin eget elit lacus. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent nec sapien ac sem luctus placerat eget a felis. Etiam id lacus in felis dignissim fermentum. Vestibulum mattis, odio vel malesuada mattis, tortor augue mollis purus, at pharetra nisl nunc eu nibh. Nulla eu commodo erat, accumsan aliquet lectus. Sed fermentum lacus ut ex vehicula molestie. Aliquam efficitur elit id tellus rhoncus lobortis. Nunc ac consequat odio, dapibus sagittis turpis. Nam gravida vel purus tincidunt placerat. Nullam vel mi et nibh volutpat viverra eu in sem.
-
-    Sed consequat, odio ac vehicula ultrices, eros lorem lobortis eros, at aliquet tellus sapien in sapien. Integer ac urna molestie, lacinia dolor dignissim, convallis neque. Suspendisse potenti. Integer purus ipsum, ullamcorper id laoreet a, ornare mattis nibh. Aenean a ex vitae ante semper luctus. Sed semper ut odio sed mattis. Proin rhoncus velit vitae neque imperdiet, id interdum purus cursus. Cras facilisis nibh sit amet ex dignissim maximus. Morbi rutrum consectetur arcu, ac mattis dolor maximus ut. Maecenas convallis, arcu sed tristique bibendum, mauris erat posuere nibh, vitae aliquam risus elit non odio. Suspendisse vel sem aliquet, luctus neque ut, pellentesque lorem. Integer lobortis molestie lorem sed porttitor.
-
-    <div class="container">
-        <div class="background"></div>
-        <div class="button"></div>
+        <div style="height: 500px; background: repeating-linear-gradient(45deg, #e5e5ea, #e5e5ea 10px, #d1d1d6 10px, #d1d1d6 20px); margin-top: 20px;"></div>
     </div>
+
+    <div class="keyboard-buttons" id="keyboardButtons">
+        <div class="buttons-row">
+            <button class="ios-btn ios-btn-secondary" id="cancelBtn">Отмена</button>
+            <button class="ios-btn ios-btn-primary" id="submitBtn">Сохранить</button>
+        </div>
+    </div>
+
+    <script>
+        class SmartKeyboardScroll {
+            constructor() {
+                this.buttons = document.getElementById('keyboardButtons');
+                this.debugInfo = document.getElementById('debugInfo');
+                this.lastViewportHeight = window.innerHeight;
+                this.keyboardHeight = 0;
+                this.isKeyboardVisible = false;
+                this.activeElement = null;
+                
+                this.init();
+            }
+
+            init() {
+                // Отслеживаем изменения размера окна
+                window.addEventListener('resize', () => this.handleResize());
+                
+                // Отслеживаем фокус на полях ввода
+                this.setupInputListeners();
+                
+                // Используем visualViewport API для iOS
+                if (window.visualViewport) {
+                    this.setupVisualViewport();
+                }
+            }
+
+            setupVisualViewport() {
+                window.visualViewport.addEventListener('resize', () => {
+                    this.handleVisualViewportChange();
+                });
+            }
+
+            handleVisualViewportChange() {
+                const visualViewport = window.visualViewport;
+                const viewportHeight = visualViewport.height;
+                const windowHeight = window.innerHeight;
+                
+                this.keyboardHeight = windowHeight - viewportHeight;
+                this.isKeyboardVisible = this.keyboardHeight > 100;
+                
+                this.updateButtonsPosition();
+                this.scrollToActiveFieldSmart();
+                this.updateDebugInfo();
+            }
+
+            handleResize() {
+                const currentHeight = window.innerHeight;
+                const heightDiff = this.lastViewportHeight - currentHeight;
+                
+                if (heightDiff > 100 && !this.isKeyboardVisible) {
+                    this.keyboardHeight = heightDiff;
+                    this.isKeyboardVisible = true;
+                    this.updateButtonsPosition();
+                    this.scrollToActiveFieldSmart();
+                } else if (heightDiff < -100 && this.isKeyboardVisible) {
+                    this.keyboardHeight = 0;
+                    this.isKeyboardVisible = false;
+                    this.updateButtonsPosition();
+                }
+                
+                this.lastViewportHeight = currentHeight;
+                this.updateDebugInfo();
+            }
+
+            setupInputListeners() {
+                const inputs = document.querySelectorAll('input, textarea');
+                
+                inputs.forEach(input => {
+                    input.addEventListener('focus', (e) => {
+                        this.activeElement = e.target;
+                        this.activeElement.classList.add('active');
+                        
+                        // Даем время клавиатуре появиться
+                        setTimeout(() => {
+                            this.isKeyboardVisible = true;
+                            this.scrollToActiveFieldSmart();
+                        }, 300);
+                    });
+                    
+                    input.addEventListener('blur', (e) => {
+                        e.target.classList.remove('active');
+                        
+                        setTimeout(() => {
+                            if (!document.activeElement || 
+                                !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+                                this.activeElement = null;
+                                this.isKeyboardVisible = false;
+                                this.keyboardHeight = 0;
+                                this.updateButtonsPosition();
+                            }
+                        }, 100);
+                    });
+                });
+            }
+
+            scrollToActiveFieldSmart() {
+                if (!this.activeElement || !this.isKeyboardVisible) return;
+
+                const element = this.activeElement;
+                const elementRect = element.getBoundingClientRect();
+                const buttonsHeight = this.buttons.offsetHeight;
+                const keyboardHeight = this.keyboardHeight;
+                
+                // Вычисляем доступную высоту экрана (высота вьюпорта минус клавиатура и кнопки)
+                const availableHeight = window.innerHeight - keyboardHeight - buttonsHeight;
+                
+                // Желаемая позиция поля - в верхней трети доступной области
+                const targetPosition = availableHeight * 0.3;
+                
+                // Текущая позиция поля относительно вьюпорта
+                const currentPosition = elementRect.top;
+                
+                // Вычисляем насколько нужно прокрутить
+                const scrollNeeded = currentPosition - targetPosition;
+                
+                if (scrollNeeded > 0) {
+                    // Прокручиваем так, чтобы поле было в верхней части экрана
+                    window.scrollBy({
+                        top: scrollNeeded,
+                        behavior: 'smooth'
+                    });
+                }
+                
+                this.updateDebugInfo();
+            }
+
+            updateButtonsPosition() {
+                if (this.isKeyboardVisible && this.keyboardHeight > 0) {
+                    this.buttons.classList.add('keyboard-visible');
+                    document.documentElement.style.setProperty('--keyboard-height', this.keyboardHeight + 'px');
+                } else {
+                    this.buttons.classList.remove('keyboard-visible');
+                    document.documentElement.style.setProperty('--keyboard-height', '0px');
+                }
+            }
+
+            updateDebugInfo() {
+                if (this.isKeyboardVisible) {
+                    const info = [
+                        `Клавиатура: ${Math.round(this.keyboardHeight)}px`,
+                        `Активное поле: ${this.activeElement?.placeholder || 'нет'}`,
+                        `Прокрутка: умная`
+                    ];
+                    this.debugInfo.innerHTML = info.join('<br>');
+                    this.debugInfo.style.background = '#4CAF50';
+                } else {
+                    this.debugInfo.innerHTML = 'Клавиатура: скрыта';
+                    this.debugInfo.style.background = '#333';
+                }
+            }
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', () => {
+            const keyboardManager = new SmartKeyboardScroll();
+            
+            document.getElementById('cancelBtn').addEventListener('click', () => {
+                document.activeElement?.blur();
+                alert('Отменено');
+            });
+            
+            document.getElementById('submitBtn').addEventListener('click', () => {
+                document.activeElement?.blur();
+                alert('Данные сохранены!');
+            });
+        });
+    </script>
 </body>
 </html>
