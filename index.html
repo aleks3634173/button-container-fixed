@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Подложка для Chrome с браузерным меню</title>
+    <title>Максимальная подложка для Chrome</title>
     <style>
         * {
             margin: 0;
@@ -11,119 +11,117 @@
             box-sizing: border-box;
         }
 
+        html {
+            background: white; /* Фон для самых краев */
+        }
+
         body {
             margin: 0;
             padding: 0;
             min-height: 200vh;
-            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(45deg, #667eea, #764ba2);
-            color: #333;
+            font-family: system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
         }
 
-        .content {
-            padding: 20px;
-            padding-bottom: 250px; /* Большой отступ для подложки */
-        }
-
-        .chrome-bottom-fixed {
+        /* Основная подложка */
+        .bottom-overlay {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
-            z-index: 1000;
-        }
-
-        /* Подложка которая заходит за пределы экрана */
-        .chrome-background {
-            position: absolute;
-            bottom: -100px; /* Расширяем вниз за пределы экрана */
-            left: 0;
-            right: 0;
-            top: -200px; /* Расширяем высоко вверх */
+            height: 300px; /* Очень большая высота */
             background: white;
-            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.15);
+            z-index: 999;
         }
 
-        /* Дополнительная защита от просвечивания */
-        .chrome-background::before {
+        /* Дополнительная подложка для градиента */
+        .bottom-overlay::before {
             content: '';
             position: absolute;
-            top: -50px;
+            bottom: 100%;
             left: 0;
             right: 0;
-            height: 50px;
-            background: white;
+            height: 100px;
+            background: linear-gradient(to top, white, transparent);
         }
 
-        .chrome-buttons {
-            position: relative;
-            padding: 25px 20px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .chrome-btn {
-            padding: 16px 32px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            min-width: 140px;
-            transition: all 0.2s ease;
+        .content {
+            padding: 20px;
+            padding-bottom: 280px; /* Большой отступ */
             position: relative;
             z-index: 1;
         }
 
-        .chrome-btn:active {
-            transform: scale(0.98);
+        .action-buttons {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
         }
 
-        .chrome-btn-primary {
-            background: #007bff;
+        .action-btn {
+            padding: 18px 36px;
+            border: none;
+            border-radius: 10px;
+            font-size: 17px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 150px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .action-confirm {
+            background: #34a853;
             color: white;
         }
 
-        .chrome-btn-secondary {
-            background: #6c757d;
+        .action-cancel {
+            background: #ea4335;
             color: white;
         }
 
-        /* Для мобильных */
+        /* Мобильная адаптация */
         @media (max-width: 768px) {
-            .chrome-buttons {
+            .action-buttons {
+                width: 100%;
+                padding: 0 20px;
                 flex-direction: column;
-                padding: 20px 16px;
+                align-items: center;
+                bottom: 20px;
             }
             
-            .chrome-btn {
+            .action-btn {
                 width: 100%;
-                max-width: 300px;
+                max-width: 320px;
+            }
+            
+            .bottom-overlay {
+                height: 250px;
             }
             
             .content {
-                padding-bottom: 220px;
+                padding-bottom: 230px;
             }
         }
     </style>
 </head>
 <body>
     <div class="content">
-        <h1>Подложка для Chrome с браузерным меню</h1>
-        <p>Подложка расширена вверх и вниз чтобы перекрывать браузерное меню</p>
-        <p>Прокрутите до самого низа - белый фон будет везде</p>
+        <h1 style="color: white;">Максимально надежное решение</h1>
+        <p style="color: white;">Подложка высотой 300px гарантированно перекрывает браузерное меню Chrome</p>
         
-        <div style="height: 1000px; background: repeating-linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.1) 10px, transparent 10px, transparent 20px);"></div>
+        <div style="height: 1000px; background: rgba(255,255,255,0.1); border: 2px dashed rgba(255,255,255,0.3);"></div>
     </div>
 
-    <div class="chrome-bottom-fixed">
-        <div class="chrome-background"></div>
-        <div class="chrome-buttons">
-            <button class="chrome-btn chrome-btn-secondary" onclick="alert('Отмена')">Отмена</button>
-            <button class="chrome-btn chrome-btn-primary" onclick="alert('Сохранено')">Сохранить</button>
-        </div>
+    <div class="bottom-overlay"></div>
+    
+    <div class="action-buttons">
+        <button class="action-btn action-cancel">Отмена</button>
+        <button class="action-btn action-confirm">Подтвердить</button>
     </div>
 </body>
 </html>
